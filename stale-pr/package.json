@@ -1,0 +1,25 @@
+{
+  "name": "stale-pr",
+  "version": "1.0.0",
+  "description": "Dismiss stale PR reviews.",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cureatr/actions/stale-pr.git"
+  },
+  "keywords": [],
+  "author": "Cureatr",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cureatr/actions/stale-pr/issues"
+  },
+  "homepage": "https://github.com/cureatr/actions/stale-pr#readme",
+  "dependencies": {
+    "@actions/core": "^1.1.0",
+    "@actions/github": "^1.1.0",
+    "diff": "^4.0.0"
+  }
+}

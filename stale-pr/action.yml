@@ -1,0 +1,12 @@
+name: StalePR
+description: 'Dismiss stale PR reviews only if new changes were introduced'
+inputs: 
+  github-token:
+    description: 'The GITHUB_TOKEN secret'
+    required: true
+  debug:
+    description: 'Whether to tell the GitHub client to log details of its requests'
+    default: false
+runs:
+  using: 'node12'
+  main: 'main.js'
