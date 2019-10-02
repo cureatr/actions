@@ -9,9 +9,13 @@ main().catch(handleError)
 
 async function main() {
     // This action only works on pull_request synchronized events
-    if (context.eventName != 'pull_request' || context.payload.action != 'synchronize') {
+    if (context.eventName != 'pull_request') {
         console.warn('context:', context);
         core.setFailed('This action requires a pull_request synchronize event');
+        return;
+    }
+    if (context.payload.action != 'synchronize') {
+        console.log('Skipping for %s action', context.payload.action);
         return;
     }
     const token = core.getInput('github-token', {required: true});
