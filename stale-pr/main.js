@@ -25,12 +25,14 @@ async function main() {
         opts.log = console;
     }
     const client = new GitHub(token, opts);
-
+    const baseSha = context.payload.pull_request.base.sha;
+    const beforeSha = context.payload.before;
+    const afterSha = context.payload.after;
     const { data: beforeDiff } = await client.repos.compareCommits({
         owner: context.payload.repository.owner.login,
         repo: context.payload.repository.name,
-        base: context.payload.pull_request.base.sha,
-        head: context.payload.before,
+        base: baseSha,
+        head: beforeSha,
         mediaType: {
             format: 'diff'
         }
@@ -38,8 +40,8 @@ async function main() {
     const { data: afterDiff } = await client.repos.compareCommits({
         owner: context.payload.repository.owner.login,
         repo: context.payload.repository.name,
-        base: context.payload.pull_request.base.sha,
-        head: context.payload.after,
+        base: baseSha,
+        head: afterSha,
         mediaType: {
             format: 'diff'
         }
@@ -49,7 +51,7 @@ async function main() {
         console.log('Diffs are identical, skipping review dismissal');
         return;
     }
-    console.log('Diffs are different.\nbefore:\n%s\nafter:\n%s', beforeDiff, afterDiff);
+    console.log('Diffs are different.\nbefore (%s..%s):\n%s\nafter (%s..%s):\n%s', baseSha, beforeSha, beforeDiff, baseSha, afterSha, afterDiff);
     const diffDiff = jsdiff.createTwoFilesPatch('before-patch', 'after-patch', beforeDiff, afterDiff, '', '', { context: 0 });
 
     // Dismiss any approved reviews of this PR if this push introduced changes
