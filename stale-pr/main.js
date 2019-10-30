@@ -18,7 +18,7 @@ async function main() {
         console.log('Skipping for %s action', context.payload.action);
         return;
     }
-    const token = core.getInput('github-token', {required: true});
+    const token = core.getInput('github-token', { required: true });
     const debug = core.getInput('debug');
     const opts = {};
     if (debug === 'true') {
@@ -49,6 +49,7 @@ async function main() {
         console.log('Diffs are identical, skipping review dismissal');
         return;
     }
+    console.log('Diffs are different.\nbefore:\n%s\nafter:\n%s', beforeDiff, afterDiff);
     const diffDiff = jsdiff.createTwoFilesPatch('before-patch', 'after-patch', beforeDiff, afterDiff, '', '', { context: 0 });
 
     // Dismiss any approved reviews of this PR if this push introduced changes
