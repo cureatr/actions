@@ -2,9 +2,9 @@
   "name": "stale-pr",
   "version": "1.0.0",
   "description": "Dismiss stale PR reviews.",
-  "main": "main.js",
+  "main": "src/main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -21,5 +21,11 @@
     "@actions/core": "^1.1.0",
     "@actions/github": "^1.1.0",
     "diff": "^4.0.0"
+  },
+  "devDependencies": {
+    "jest": "^24.8.0"
+  },
+  "jest": {
+    "testEnvironment": "node"
   }
 }

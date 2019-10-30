@@ -1,0 +1,17 @@
+name: "Test StalePR"
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Run tests
+        run: |
+          cd stale-pr
+          npm test
