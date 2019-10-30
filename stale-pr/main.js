@@ -28,7 +28,7 @@ async function main() {
     const baseSha = context.payload.pull_request.base.sha;
     const beforeSha = context.payload.before;
     const afterSha = context.payload.after;
-    const { data: beforeDiff } = await client.repos.compareCommits({
+    const { data: rawBeforeDiff } = await client.repos.compareCommits({
         owner: context.payload.repository.owner.login,
         repo: context.payload.repository.name,
         base: baseSha,
@@ -37,7 +37,7 @@ async function main() {
             format: 'diff'
         }
     });
-    const { data: afterDiff } = await client.repos.compareCommits({
+    const { data: rawAfterDiff } = await client.repos.compareCommits({
         owner: context.payload.repository.owner.login,
         repo: context.payload.repository.name,
         base: baseSha,
@@ -47,6 +47,14 @@ async function main() {
         }
     });
 
+    // Strip any lines that don't begin with space or +/-.
+    // We need to remove lines like "index b9c4b80ad4..e6c4b00bed 100644" because when squashing,
+    // the commit that an identical change was introduced in can change.
+    // We need to remove lines like "@@ -481,7 +481,7 @@" because an identical change may have moved
+    // line position due to upstream changes it was rebased onto.
+    const re = /^[^ +-].*$/gm;
+    const beforeDiff = rawBeforeDiff.replace(re, "");
+    const afterDiff = rawAfterDiff.replace(re, "");
     if (beforeDiff == afterDiff) {
         console.log('Diffs are identical, skipping review dismissal');
         return;
