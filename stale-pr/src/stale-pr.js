@@ -66,14 +66,15 @@ async function run() {
         })) {
             for (const review of chunk.data) {
                 if (review.state == 'APPROVED') {
-                    console.log('Dismissing review %d', review.id);
-                    await octokit.rest.pulls.dismissReview({
+                    const result = await octokit.rest.pulls.dismissReview({
                         owner: context.payload.repository.owner.login,
                         repo: context.payload.repository.name,
                         pull_number: context.payload.number,
                         review_id: review.id,
                         message: util.format('PR has new changes, this review is stale. Diff of diffs:\n```diff\n%s\n```', diffDiff)
                     });
+                    console.log('Dismissing review %d: %s',
+                                review.id, JSON.stringify(result));
                 }
             }
         }
