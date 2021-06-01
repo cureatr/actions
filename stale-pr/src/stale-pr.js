@@ -1,10 +1,11 @@
 const util = require('util');
 const core = require('@actions/core')
-const {GitHub, context} = require('@actions/github')
+const github = require('@actions/github')
 const jsdiff = require('diff')
 
 async function run() {
     try {
+        const context = github.context;
         // This action only works on pull_request synchronized events
         if (context.eventName != 'pull_request') {
             console.warn('context:', context);
@@ -21,24 +22,22 @@ async function run() {
         if (debug === 'true') {
             opts.log = console;
         }
-        const github = new GitHub(token, opts);
+        const octokit = github.getOctokit(token, opts);
         const baseSha = context.payload.pull_request.base.sha;
         const beforeSha = context.payload.before;
         const afterSha = context.payload.after;
-        const { data: rawBeforeDiff } = await github.repos.compareCommits({
+        const { data: rawBeforeDiff } = await octokit.rest.repos.compareCommitsWithBasehead({
             owner: context.payload.repository.owner.login,
             repo: context.payload.repository.name,
-            base: baseSha,
-            head: beforeSha,
+            basehead: `${baseSha}...${beforeSha}`,
             mediaType: {
                 format: 'diff'
             }
         });
-        const { data: rawAfterDiff } = await github.repos.compareCommits({
+        const { data: rawAfterDiff } = await octokit.rest.repos.compareCommitsWithBasehead({
             owner: context.payload.repository.owner.login,
             repo: context.payload.repository.name,
-            base: baseSha,
-            head: afterSha,
+            basehead: `${baseSha}...${afterSha}`,
             mediaType: {
                 format: 'diff'
             }
@@ -60,16 +59,15 @@ async function run() {
         const diffDiff = jsdiff.createTwoFilesPatch('before-patch', 'after-patch', beforeDiff, afterDiff, '', '', { context: 0 });
 
         // Dismiss any approved reviews of this PR if this push introduced changes
-        const options = github.pulls.listReviews.endpoint.merge({
+        for await (const chunk of octokit.paginate.iterator(octokit.rest.pulls.listReviews, {
             owner: context.payload.repository.owner.login,
             repo: context.payload.repository.name,
             pull_number: context.payload.number
-        });
-        for await (const chunk of github.paginate.iterator(options)) {
+        })) {
             for (const review of chunk.data) {
                 if (review.state == 'APPROVED') {
                     console.log('Dismissing review %d', review.id);
-                    await github.pulls.dismissReview({
+                    await octokit.rest.pulls.dismissReview({
                         owner: context.payload.repository.owner.login,
                         repo: context.payload.repository.name,
                         pull_number: context.payload.number,

@@ -2,14 +2,14 @@ jest.mock('@actions/core');
 jest.mock('@actions/github');
 
 const core = require('@actions/core');
-const { GitHub, context } = require('@actions/github');
+const github = require('@actions/github');
 const run = require('../src/stale-pr');
 
 describe('Stale PR', () => {
-    let dismissReview, compareCommits;
+    let dismissReview, compareCommitsWithBasehead;
 
     beforeEach(() => {
-        compareCommits = jest.fn();
+        compareCommitsWithBasehead = jest.fn();
         let merge = jest.fn().mockReturnValueOnce({});
         let iterator = jest.fn().mockReturnValueOnce(
             [
@@ -25,8 +25,8 @@ describe('Stale PR', () => {
         );
         dismissReview = jest.fn();
 
-        context.eventName = 'pull_request';
-        context.payload = {
+        github.context.eventName = 'pull_request';
+        github.context.payload = {
             action: 'synchronize',
             before: '790fe8dfc858c01f1620ca3a548e87d83743c968',
             after: 'c0de998dbee3354e636211dbad25515fffc57a70',
@@ -49,28 +49,30 @@ describe('Stale PR', () => {
             .mockReturnValueOnce('myToken')
             .mockReturnValueOnce(false);
 
-        const github = {
-            repos: {
-                compareCommits
-            },
-            pulls: {
-                listReviews: {
-                    endpoint: {
-                        merge
-                    }
+        const octokit = {
+            rest: {
+                repos: {
+                    compareCommitsWithBasehead
                 },
-                dismissReview
+                pulls: {
+                    listReviews: {
+                        endpoint: {
+                            merge
+                        }
+                    },
+                    dismissReview
+                },
             },
             paginate: {
                 iterator
             }
         };
 
-        GitHub.mockImplementation(() => github);
+        github.getOctokit.mockImplementation(() => octokit);
     });
 
     test('Do not dismiss if diffs are identical', async () => {
-        compareCommits
+        compareCommitsWithBasehead
             .mockReturnValueOnce({ data: '+ same' })
             .mockReturnValueOnce({ data: '+ same' });
 
@@ -80,7 +82,7 @@ describe('Stale PR', () => {
     });
 
     test('Dismiss if diffs differ', async () => {
-        compareCommits
+        compareCommitsWithBasehead
             .mockReturnValueOnce({ data: '+ same' })
             .mockReturnValueOnce({ data: '- diff' });
 
@@ -97,7 +99,7 @@ describe('Stale PR', () => {
     });
 
     test('Do not dismiss if filtered diffs are identical', async () => {
-        compareCommits
+        compareCommitsWithBasehead
             .mockReturnValueOnce({ data:
 `
 diff --git a/cureatr/lib/saml.py b/cureatr/lib/saml.py
