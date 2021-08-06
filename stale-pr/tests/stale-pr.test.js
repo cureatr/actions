@@ -6,7 +6,7 @@ const github = require('@actions/github');
 const run = require('../src/stale-pr');
 
 describe('Stale PR', () => {
-    let dismissReview, compareCommitsWithBasehead;
+    let dismissReview, createComment, compareCommitsWithBasehead;
 
     beforeEach(() => {
         compareCommitsWithBasehead = jest.fn();
@@ -24,6 +24,7 @@ describe('Stale PR', () => {
             ]
         );
         dismissReview = jest.fn();
+        createComment = jest.fn();
 
         github.context.eventName = 'pull_request';
         github.context.payload = {
@@ -62,6 +63,9 @@ describe('Stale PR', () => {
                     },
                     dismissReview
                 },
+                issues: {
+                    createComment
+                },
             },
             paginate: {
                 iterator
@@ -79,6 +83,7 @@ describe('Stale PR', () => {
         await run();
 
         expect(dismissReview).not.toHaveBeenCalled();
+        expect(createComment).not.toHaveBeenCalled();
     });
 
     test('Dismiss if diffs differ', async () => {
@@ -94,6 +99,13 @@ describe('Stale PR', () => {
                 repo: 'myrepo',
                 pull_number: 42,
                 review_id: 333
+            })
+        );
+        expect(createComment).toHaveBeenCalledWith(
+            expect.objectContaining({
+                owner: 'octocat',
+                repo: 'myrepo',
+                issue_number: 42,
             })
         );
     });
@@ -138,5 +150,6 @@ index 7d1a64cc9d..b07c4b6e99 100644
         await run();
 
         expect(dismissReview).not.toHaveBeenCalled();
+        expect(createComment).not.toHaveBeenCalled();
     });
 });

@@ -71,13 +71,19 @@ async function run() {
                         repo: context.payload.repository.name,
                         pull_number: context.payload.number,
                         review_id: review.id,
-                        message: util.format('PR has new changes, this review is stale. Diff of diffs:\n```diff\n%s\n```', diffDiff)
+                        message: util.format('PR has new changes, this review is stale - dismissing.')
                     });
-                    console.log('Dismissing review %d: %s',
-                                review.id, JSON.stringify(result));
+                    console.log('Dismissing review %d: %s', review.id, JSON.stringify(result));
                 }
             }
         }
+        const result = await octokit.rest.issues.createComment({
+            owner: context.payload.repository.owner.login,
+            repo: context.payload.repository.name,
+            issue_number: context.payload.number,
+            body: util.format('PR has new changes. Diff of diffs:\n```diff\n%s\n```', diffDiff)
+        });
+        console.log('Created comment: %s', JSON.stringify(result));
     } catch (error) {
         console.error(error);
         core.setFailed(error.message);
