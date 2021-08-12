@@ -58,6 +58,7 @@ async function run() {
         console.log('Diffs are different.\nbefore (%s..%s):\n%s\nafter (%s..%s):\n%s', baseSha, beforeSha, beforeDiff, baseSha, afterSha, afterDiff);
         const diffDiff = jsdiff.createTwoFilesPatch('before-patch', 'after-patch', beforeDiff, afterDiff, '', '', { context: 0 });
 
+        let dismissed = false;
         // Dismiss any approved reviews of this PR if this push introduced changes
         for await (const chunk of octokit.paginate.iterator(octokit.rest.pulls.listReviews, {
             owner: context.payload.repository.owner.login,
@@ -74,16 +75,19 @@ async function run() {
                         message: util.format('PR has new changes, this review is stale - dismissing.')
                     });
                     console.log('Dismissing review %d: %s', review.id, JSON.stringify(result));
+                    dismissed = true;
                 }
             }
         }
-        const result = await octokit.rest.issues.createComment({
-            owner: context.payload.repository.owner.login,
-            repo: context.payload.repository.name,
-            issue_number: context.payload.number,
-            body: util.format('PR has new changes. Diff of diffs:\n```diff\n%s\n```', diffDiff)
-        });
-        console.log('Created comment: %s', JSON.stringify(result));
+        if (dismissed) {
+            const result = await octokit.rest.issues.createComment({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                issue_number: context.payload.number,
+                body: util.format('PR has new changes. Diff of diffs:\n```diff\n%s\n```', diffDiff)
+            });
+            console.log('Created comment: %s', JSON.stringify(result));
+        }
     } catch (error) {
         console.error(error);
         core.setFailed(error.message);
