@@ -8,5 +8,5 @@ inputs:
     description: 'Whether to tell the GitHub client to log details of its requests'
     default: false
 runs:
-  using: 'node18'
+  using: 'node20'
   main: 'src/main.js'
