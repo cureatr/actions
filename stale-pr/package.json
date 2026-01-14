@@ -20,7 +20,7 @@
   "dependencies": {
     "@actions/core": "^1.9.1",
     "@actions/github": "^6.0.0",
-    "diff": "^5.0.0"
+    "diff": "^8.0.3"
   },
   "devDependencies": {
     "jest": "^27.0.3"
