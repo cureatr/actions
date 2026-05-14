@@ -1,14 +1,27 @@
-jest.mock('@actions/core');
-jest.mock('@actions/github');
+import { jest } from '@jest/globals';
 
-const core = require('@actions/core');
-const github = require('@actions/github');
-const run = require('../src/stale-pr');
+jest.unstable_mockModule('@actions/core', () => ({
+    getInput: jest.fn(),
+    setFailed: jest.fn(),
+}));
+
+jest.unstable_mockModule('@actions/github', () => ({
+    context: {
+        eventName: 'pull_request',
+        payload: {}
+    },
+    getOctokit: jest.fn(),
+}));
+
+const core = await import('@actions/core');
+const github = await import('@actions/github');
+const { default: run } = await import('../src/stale-pr.js');
 
 describe('Stale PR', () => {
     let dismissReview, createComment, compareCommitsWithBasehead;
 
     beforeEach(() => {
+        jest.clearAllMocks();
         compareCommitsWithBasehead = jest.fn();
         let merge = jest.fn().mockReturnValueOnce({});
         let iterator = jest.fn().mockReturnValueOnce(
@@ -45,8 +58,7 @@ describe('Stale PR', () => {
             }
         }
 
-        core.getInput = jest
-            .fn()
+        core.getInput
             .mockReturnValueOnce('myToken')
             .mockReturnValueOnce(false);
 

@@ -1,10 +1,12 @@
 {
   "name": "stale-pr",
   "version": "1.0.0",
+  "type": "module",
   "description": "Dismiss stale PR reviews.",
   "main": "src/main.js",
   "scripts": {
-    "test": "jest"
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "build": "ncc build src/main.js -o dist --source-map --license licenses.txt"
   },
   "repository": {
     "type": "git",
@@ -23,7 +25,9 @@
     "diff": "^9.0.0"
   },
   "devDependencies": {
-    "jest": "^30.4.2"
+    "@vercel/ncc": "^0.38.4",
+    "jest": "^30.4.2",
+    "jest-circus": "^30.4.2"
   },
   "jest": {
     "testEnvironment": "node"

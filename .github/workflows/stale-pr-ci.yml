@@ -15,7 +15,24 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24
+          cache: 'npm'
+          cache-dependency-path: stale-pr/package-lock.json
+      - name: Install dependencies
+        run: |
+          cd stale-pr
+          npm ci
       - name: Run tests
         run: |
           cd stale-pr
           npm test
+      - name: Build action
+        run: |
+          cd stale-pr
+          npm run build
+      - name: Check for uncommitted changes in dist
+        run: |
+          if [ -n "$(git status --porcelain stale-pr/dist)" ]; then
+            echo "Error: The dist directory is out of date. Please run 'npm run build' and commit the changes."
+            git status --porcelain stale-pr/dist
+            exit 1
+          fi

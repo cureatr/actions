@@ -1,7 +1,7 @@
-const util = require('util');
-const core = require('@actions/core')
-const github = require('@actions/github')
-const jsdiff = require('diff')
+import util from 'util';
+import * as core from '@actions/core';
+import * as github from '@actions/github';
+import { createTwoFilesPatch } from 'diff';
 
 async function run() {
     try {
@@ -56,7 +56,7 @@ async function run() {
             return;
         }
         console.log('Diffs are different.\nbefore (%s..%s):\n%s\nafter (%s..%s):\n%s', baseSha, beforeSha, beforeDiff, baseSha, afterSha, afterDiff);
-        const diffDiff = jsdiff.createTwoFilesPatch('before-patch', 'after-patch', beforeDiff, afterDiff, '', '', { context: 0 });
+        const diffDiff = createTwoFilesPatch('before-patch', 'after-patch', beforeDiff, afterDiff, '', '', { context: 0 });
 
         let dismissed = false;
         // Dismiss any approved reviews of this PR if this push introduced changes
@@ -94,4 +94,4 @@ async function run() {
     }
 }
 
-module.exports = run;
+export default run;
