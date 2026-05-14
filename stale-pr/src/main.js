@@ -1,5 +1,3 @@
-const run = require('./stale-pr');
+import run from './stale-pr.js';
 
-if (require.main === module) {
-    run();
-}
+run();
