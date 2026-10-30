@@ -18,13 +18,13 @@ const github = await import('@actions/github');
 const { default: run } = await import('../src/stale-pr.js');
 
 describe('Stale PR', () => {
-    let dismissReview, createComment, compareCommitsWithBasehead;
+    let dismissReview, createComment, compareCommitsWithBasehead, iterator;
 
     beforeEach(() => {
         jest.clearAllMocks();
         compareCommitsWithBasehead = jest.fn();
         let merge = jest.fn().mockReturnValueOnce({});
-        let iterator = jest.fn().mockReturnValueOnce(
+        iterator = jest.fn().mockReturnValue(
             [
                 Promise.resolve({
                     data: [
@@ -161,6 +161,43 @@ index 7d1a64cc9d..b07c4b6e99 100644
 
         await run();
 
+        expect(dismissReview).not.toHaveBeenCalled();
+        expect(createComment).not.toHaveBeenCalled();
+    });
+
+    test('Do not generate diffs or dismiss if there are no reviews', async () => {
+        iterator.mockReturnValueOnce([
+            Promise.resolve({
+                data: []
+            })
+        ]);
+
+        await run();
+
+        expect(compareCommitsWithBasehead).not.toHaveBeenCalled();
+        expect(dismissReview).not.toHaveBeenCalled();
+        expect(createComment).not.toHaveBeenCalled();
+    });
+
+    test('Do not generate diffs or dismiss if there are no approved reviews', async () => {
+        iterator.mockReturnValueOnce([
+            Promise.resolve({
+                data: [
+                    {
+                        id: 333,
+                        state: 'COMMENTED'
+                    },
+                    {
+                        id: 444,
+                        state: 'CHANGES_REQUESTED'
+                    }
+                ]
+            })
+        ]);
+
+        await run();
+
+        expect(compareCommitsWithBasehead).not.toHaveBeenCalled();
         expect(dismissReview).not.toHaveBeenCalled();
         expect(createComment).not.toHaveBeenCalled();
     });

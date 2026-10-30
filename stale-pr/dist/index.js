@@ -38098,6 +38098,25 @@ async function run() {
             opts.log = console;
         }
         const octokit = getOctokit(token, opts);
+
+        const approvedReviews = [];
+        for await (const chunk of octokit.paginate.iterator(octokit.rest.pulls.listReviews, {
+            owner: context.payload.repository.owner.login,
+            repo: context.payload.repository.name,
+            pull_number: context.payload.number
+        })) {
+            for (const review of chunk.data) {
+                if (review.state === 'APPROVED') {
+                    approvedReviews.push(review);
+                }
+            }
+        }
+
+        if (approvedReviews.length === 0) {
+            console.log('No approved reviews found, skipping');
+            return;
+        }
+
         const baseSha = context.payload.pull_request.base.sha;
         const beforeSha = context.payload.before;
         const afterSha = context.payload.after;
@@ -38135,24 +38154,16 @@ async function run() {
 
         let dismissed = false;
         // Dismiss any approved reviews of this PR if this push introduced changes
-        for await (const chunk of octokit.paginate.iterator(octokit.rest.pulls.listReviews, {
-            owner: context.payload.repository.owner.login,
-            repo: context.payload.repository.name,
-            pull_number: context.payload.number
-        })) {
-            for (const review of chunk.data) {
-                if (review.state == 'APPROVED') {
-                    const result = await octokit.rest.pulls.dismissReview({
-                        owner: context.payload.repository.owner.login,
-                        repo: context.payload.repository.name,
-                        pull_number: context.payload.number,
-                        review_id: review.id,
-                        message: external_util_.format('PR has new changes, this review is stale - dismissing.')
-                    });
-                    console.log('Dismissing review %d: %s', review.id, JSON.stringify(result));
-                    dismissed = true;
-                }
-            }
+        for (const review of approvedReviews) {
+            const result = await octokit.rest.pulls.dismissReview({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                pull_number: context.payload.number,
+                review_id: review.id,
+                message: external_util_.format('PR has new changes, this review is stale - dismissing.')
+            });
+            console.log('Dismissing review %d: %s', review.id, JSON.stringify(result));
+            dismissed = true;
         }
         if (dismissed) {
             const result = await octokit.rest.issues.createComment({
